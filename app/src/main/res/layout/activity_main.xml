@@ -4,29 +4,70 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="16dp">
+    android:padding="32dp"
+    android:background="#FFFFFF">
+
+    <!-- Logo Section -->
+    <ImageView
+        android:id="@+id/imgLogo"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@android:drawable/ic_dialog_map"
+        android:layout_marginBottom="16dp"/>
+        <!-- app:tint="#6200EE" -->
+
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Home Screen"
-        android:textSize="24sp"
+        android:text="Ekayam"
+        android:textSize="40sp"
         android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
+        android:textColor="#6200EE"
+        android:fontFamily="sans-serif-black"
+        android:layout_marginBottom="8dp"/>
 
-    <!-- Button for Page 1 -->
-    <Button
-        android:id="@+id/btnGoToPage1"
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Go to Page 1"
+        android:text="Uniting Communities"
+        android:textSize="16sp"
+        android:textColor="#757575"
+        android:layout_marginBottom="60dp"/>
+
+    <!-- Auth Buttons -->
+    <Button
+        android:id="@+id/btnLandingLogin"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Login"
+        android:textSize="16sp"
+        android:backgroundTint="#6200EE"
         android:layout_marginBottom="16dp"/>
 
-    <!-- Button for Page 2 -->
     <Button
-        android:id="@+id/btnGoToPage2"
+        android:id="@+id/btnLandingRegister"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:text="Create New Account"
+        android:textSize="16sp"
+        android:textColor="#6200EE"
+        android:backgroundTint="#FFFFFF"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_marginBottom="32dp"/>
+
+    <!-- NEW: Skip / Bypass Link -->
+    <TextView
+        android:id="@+id/tvSkipToDashboard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Go to Page 2"/>
+        android:text="Skip to Dashboard (Guest Mode) →"
+        android:textColor="#9E9E9E"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:padding="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:background="?attr/selectableItemBackground"/>
 
 </LinearLayout>

@@ -1,29 +1,40 @@
-package com.example.ekayam // Don't copy this line, use your own package name
+package com.example.ekayam
 
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // 1. Install Splash Screen (Must come before setContentView)
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // 1. Find the buttons
-        val button1 = findViewById<Button>(R.id.btnGoToPage1)
-        val button2 = findViewById<Button>(R.id.btnGoToPage2)
+        // 2. Find Views
+        val btnLogin = findViewById<Button>(R.id.btnLandingLogin)
+        val btnRegister = findViewById<Button>(R.id.btnLandingRegister)
+        val tvSkip = findViewById<TextView>(R.id.tvSkipToDashboard) // The new Skip link
 
-        // 2. Set Click Listener for Page 1
-        button1.setOnClickListener {
-            // This Intent tells Android: "From this Context (this), go to PageOneActivity"
-            val intent = Intent(this, PageOneActivity::class.java)
+        // 3. Navigate to Login Page
+        btnLogin.setOnClickListener {
+            val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
         }
 
-        // 3. Set Click Listener for Page 2
-        button2.setOnClickListener {
-            val intent = Intent(this, PageTwoActivity::class.java)
+        // 4. Navigate to Register Page
+        btnRegister.setOnClickListener {
+            val intent = Intent(this, RegisterActivity::class.java)
+            startActivity(intent)
+        }
+
+        // 5. Navigate DIRECTLY to Dashboard (Bypassing Login)
+        tvSkip.setOnClickListener {
+            val intent = Intent(this, DashboardActivity::class.java)
             startActivity(intent)
         }
     }

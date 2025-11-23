@@ -44,6 +44,10 @@ dependencies {
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
     implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    //implementation("com.github.MKergall:osmbonuspack:6.9.0") // Optional extras
+    implementation("com.uber:h3-android:4.3.2")
+    implementation("com.google.android.gms:play-services-location:21.2.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
