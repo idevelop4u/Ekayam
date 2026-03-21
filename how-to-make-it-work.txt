@@ -1,0 +1,3 @@
+cd Client / cd Server/epic-backend/
+
+npm install 
