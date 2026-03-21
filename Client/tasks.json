@@ -1,0 +1,40 @@
+{
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Fix bottom gaps on Helper List",
+      "status": "pending",
+      "description": "Reduce excessive bottom padding in app/helper-list.tsx from 128px to 24px."
+    },
+    {
+      "id": "task-2",
+      "title": "Fix bottom gaps on Task Confirmation",
+      "status": "pending",
+      "description": "Adjust bottom padding in app/task-confirmation.tsx. Currently 200px, reduce to ~100px to clear the fixed bottom bar without excessive whitespace."
+    },
+    {
+      "id": "task-3",
+      "title": "Fix bottom gaps on Payment Tip",
+      "status": "pending",
+      "description": "Adjust bottom padding in app/payment-tip.tsx. Currently 200px, reduce to ~100px to clear the fixed bottom bar without excessive whitespace."
+    },
+    {
+      "id": "task-4",
+      "title": "Review Home page gaps",
+      "status": "pending",
+      "description": "Check app/(tabs)/index.tsx for bottom padding issues. Ensure it has ~128px to clear the tab bar, but not significantly more."
+    },
+    {
+      "id": "task-5",
+      "title": "Review Profile page gaps",
+      "status": "pending",
+      "description": "Check app/(tabs)/profile.tsx for bottom padding issues. Ensure it has ~128px to clear the tab bar, but not significantly more."
+    },
+    {
+      "id": "task-6",
+      "title": "Review Bookings page gaps",
+      "status": "pending",
+      "description": "Check app/(tabs)/bookings.tsx for bottom padding issues. Ensure it has ~128px to clear the tab bar, but not significantly more."
+    }
+  ]
+}
