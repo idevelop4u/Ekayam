@@ -1,0 +1,21 @@
+app/
+├── _layout.tsx           <-- Root layout (Auth & Theme Providers)
+├── index.tsx             <-- Entry point (Redirects to Login or Dashboard)
+├── (auth)/               <-- Authentication Group
+│   ├── login.tsx
+│   └── register.tsx
+├── (user)/               <-- Requester Group
+│   └── (tabs)/           <-- Tab navigation for elderly users
+│       ├── _layout.tsx
+│       ├── index.tsx     <-- User Dashboard
+│       └── profile.tsx
+├── (helper)/             <-- Helper Group
+│   ├── _layout.tsx
+│   ├── dashboard.tsx
+│   └── helper-list.tsx
+├── components/           <-- Reusable UI (Buttons, Inputs)
+├── context/
+│   ├── AuthContext.tsx   <-- Handles user role & login state
+│   └── ThemeContext.tsx  <-- Handles persistent theme
+└── constants/
+    └── Colors.ts         <-- Minimalist color palette
