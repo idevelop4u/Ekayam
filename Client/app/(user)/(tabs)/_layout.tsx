@@ -1,46 +1,30 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
-import { Home, UserCircle } from 'lucide-react-native';
+import { View, ActivityIndicator } from 'react-native';
+import { Redirect } from 'expo-router';
+import { useAuth } from './context/AuthContext';
 
-export default function TabLayout() {
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: '#0D9488', // Primary Teal
-        tabBarInactiveTintColor: '#94a3b8',
-        tabBarStyle: {
-          borderTopWidth: 1,
-          borderTopColor: '#E2E8F0',
-          height: 65,
-          paddingBottom: 10,
-        },
-        headerStyle: {
-          backgroundColor: '#fff',
-        },
-        headerShadowVisible: false,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-          fontSize: 20,
-        },
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Dashboard',
-          tabBarLabel: 'Home',
-          headerTitle: 'CommunityConnect',
-          tabBarIcon: ({ color }) => <Home size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'My Profile',
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ color }) => <UserCircle size={24} color={color} />,
-        }}
-      />
-    </Tabs>
-  );
+export default function AppEntryPoint() {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  // 1. Show a loading spinner while we check AsyncStorage for a saved token
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <ActivityIndicator size="large" color="#0D9488" />
+      </View>
+    );
+  }
+
+  // 2. If no user is logged in, send them to the Login screen
+  if (!isAuthenticated || !user) {
+    return <Redirect href="/(auth)/login" />;
+  }
+
+  // 3. If they are logged in as a helper, send them to the Helper group
+  if (user.role === 'helper') {
+    return <Redirect href="/(helper)/dashboard" />; 
+  }
+
+  // 4. If they are logged in as a standard user (elderly), send them to the User tabs
+  return <Redirect href="/(user)/(tabs)" />;
 }
