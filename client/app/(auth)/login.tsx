@@ -1,248 +1,191 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  Alert, 
-  StyleSheet, 
-  ActivityIndicator,
+import React, { useState, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  StatusBar,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Phone, ShieldCheck, ArrowRight, RefreshCcw } from 'lucide-react-native';
-import { useAuth } from '../../context/AuthContext';
-import { authService } from '../../services/authService';
+import { ArrowRight, Sun, Moon } from 'lucide-react-native';
+
+const THEME = {
+  cyan: '#00BAF2',
+  light: { bg: '#F8F8F8', text: '#171717', sub: '#8E8E93', border: '#D1D1D6' },
+  dark: { bg: '#000000', text: '#FFFFFF', sub: '#636366', border: '#2C2C2E' }
+};
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn } = useAuth();
-  
-  // State Management
-  const [role, setRole] = useState<'user' | 'helper'>('user');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
+  const [isDark, setIsDark] = useState(true);
+  const [role, setRole] = useState<'User' | 'Helper'>('User');
+  const [displayedGreeting, setDisplayedGreeting] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Step 1: Request OTP from Backend
-  const handleSendOtp = async () => {
-    if (phone.length < 10) {
-      Alert.alert("Invalid Number", "Please enter a valid 10-digit mobile number.");
-      return;
-    }
+  // Animation Refs
+  const themeValue = useRef(new Animated.Value(1)).current; 
+  const glowAnim = useRef(new Animated.Value(0.4)).current;
+  const titleScale = useRef(new Animated.Value(0.92)).current; // Title scale starts smaller
+  const titleOpacity = useRef(new Animated.Value(0)).current;
 
-    setIsLoading(true);
-    try {
-      await authService.requestOtp(phone);
-      setIsOtpSent(true);
-      // For development, remind user to check the Node.js console
-      Alert.alert("OTP Sent", "Please check your messages (or server console for demo).");
-    } catch (err: any) {
-      Alert.alert("Error", err.toString());
-    } finally {
-      setIsLoading(false);
-    }
+  // 1. Entrance & Glowing Animations
+  useEffect(() => {
+    // Title Scale & Fade Entrance
+    Animated.parallel([
+      Animated.timing(titleScale, {
+        toValue: 1,
+        duration: 1000,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(titleOpacity, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      })
+    ]).start();
+
+    // Loop for the Cyan Glow
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0.4, duration: 1200, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  // 2. Typing Greeting Logic
+  useEffect(() => {
+    const fullText = role === 'User' ? "Looking for a helping hand?" : "Ready to change a life today?";
+    let currentIdx = 0;
+    setDisplayedGreeting("");
+    const typingInterval = setInterval(() => {
+      if (currentIdx < fullText.length) {
+        setDisplayedGreeting(fullText.substring(0, currentIdx + 1));
+        currentIdx++;
+      } else { clearInterval(typingInterval); }
+    }, 40);
+    return () => clearInterval(typingInterval);
+  }, [role]);
+
+  const toggleTheme = () => {
+    const nextIsDark = !isDark;
+    Animated.timing(themeValue, { toValue: nextIsDark ? 1 : 0, duration: 500, useNativeDriver: false }).start();
+    setIsDark(nextIsDark);
   };
 
-  // Step 2: Verify OTP and Login
-  const handleVerifyOtp = async () => {
-    if (otp.length < 4) {
-      Alert.alert("Invalid OTP", "Please enter the 4-digit code.");
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const data = await authService.verifyOtp(phone, otp, role);
-      // 'signIn' updates the AuthContext and triggers the redirect logic
-      await signIn(data.role, data.token);
-    } catch (err: any) {
-      Alert.alert("Verification Failed", "The OTP entered is incorrect.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const bgColor = themeValue.interpolate({ inputRange: [0, 1], outputRange: [THEME.light.bg, THEME.dark.bg] });
+  const textColor = themeValue.interpolate({ inputRange: [0, 1], outputRange: [THEME.light.text, THEME.dark.text] });
+  const subColor = themeValue.interpolate({ inputRange: [0, 1], outputRange: [THEME.light.sub, THEME.dark.sub] });
+  const borderColor = themeValue.interpolate({ inputRange: [0, 1], outputRange: [THEME.light.border, THEME.dark.border] });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          
-          {/* Header Section */}
-          <View style={styles.header}>
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>
-              Sign in to your {role === 'user' ? 'Requester' : 'Helper'} account
-            </Text>
-          </View>
+    <Animated.View style={[styles.container, { backgroundColor: bgColor }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      <SafeAreaView style={{ flex: 1 }}>
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.content} bounces={false} showsVerticalScrollIndicator={false}>
 
-          {/* Role Toggle */}
-          <View style={styles.roleContainer}>
-            {(['user', 'helper'] as const).map((r) => (
-              <TouchableOpacity 
-                key={r}
-                onPress={() => {
-                  setRole(r);
-                  setIsOtpSent(false); // Reset if they change roles
-                }}
-                style={[styles.roleButton, role === r && styles.roleActive]}
-              >
-                <Text style={[styles.roleText, role === r && styles.roleTextActive]}>
-                  {r === 'user' ? 'I need help' : 'I want to help'}
-                </Text>
+            {/* Huge App Title Section with Scale Animation */}
+            <View style={styles.header}>
+              <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
+                {isDark ? <Sun size={24} color="#FBBF24" /> : <Moon size={24} color="#171717" />}
               </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* Conditional Input UI */}
-          {!isOtpSent ? (
-            <View style={styles.inputSection}>
-              <Text style={styles.label}>Mobile Number</Text>
-              <View style={styles.inputWrapper}>
-                <Phone size={20} color="#64748B" style={styles.inputIcon} />
-                <TextInput
-                  placeholder="98765 43210"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  style={styles.input}
-                  maxLength={10}
-                />
-              </View>
               
-              <TouchableOpacity 
-                onPress={handleSendOtp} 
-                style={styles.primaryButton}
-                disabled={isLoading}
-              >
-                {isLoading ? <ActivityIndicator color="#fff" /> : (
-                  <>
-                    <Text style={styles.buttonText}>Send OTP</Text>
-                    <ArrowRight size={20} color="#fff" />
-                  </>
-                )}
-              </TouchableOpacity>
+              <Animated.View style={[styles.brandContainer, { transform: [{ scale: titleScale }], opacity: titleOpacity }]}>
+                <View style={styles.titleRow}>
+                  <Animated.Text style={[styles.hindiTitle, { color: textColor }]}>एका</Animated.Text>
+                  <Animated.Text style={[styles.latinTitle, { color: textColor }]}>yam</Animated.Text>
+                </View>
+                <View style={styles.taglineRow}>
+                  <Animated.View style={[styles.glowDot, { opacity: glowAnim }]} />
+                  <Animated.Text style={[styles.tagline, { color: subColor }]}>COMMUNITY CONNECT</Animated.Text>
+                </View>
+              </Animated.View>
             </View>
-          ) : (
-            <View style={styles.inputSection}>
-              <Text style={styles.label}>Verify Phone</Text>
-              <Text style={styles.helperText}>Enter the 4-digit code sent to {phone}</Text>
-              
+
+            {/* Typing Greeting */}
+            <View style={styles.heroSection}>
+              <Animated.Text style={[styles.greetingText, { color: textColor }]}>
+                {displayedGreeting}<Text style={{ color: THEME.cyan }}>_</Text>
+              </Animated.Text>
+            </View>
+
+            {/* Tabs */}
+            <View style={styles.tabs}>
+              {['User', 'Helper'].map((t) => (
+                <TouchableOpacity key={t} onPress={() => { setRole(t as any); setIsOtpSent(false); }} style={styles.tabItem}>
+                  <Animated.Text style={[styles.tabLabel, { color: role === t ? THEME.cyan : subColor }]}>{t}</Animated.Text>
+                  {role === t && <View style={styles.tabIndicator} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Form */}
+            <View style={styles.formContainer}>
               <View style={styles.inputWrapper}>
-                <ShieldCheck size={20} color="#64748B" style={styles.inputIcon} />
-                <TextInput
-                  placeholder="0 0 0 0"
-                  value={otp}
-                  onChangeText={setOtp}
-                  keyboardType="number-pad"
-                  style={[styles.input, { letterSpacing: 10, fontWeight: 'bold' }]}
-                  maxLength={4}
-                />
+                <Animated.Text style={[styles.inputLabel, { color: subColor }]}>{isOtpSent ? "VERIFICATION" : "MOBILE NUMBER"}</Animated.Text>
+                <Animated.View style={[styles.inputLine, { borderBottomColor: borderColor }]}>
+                  <TextInput
+                    placeholder={isOtpSent ? "0 0 0 0" : "91 00000 00000"}
+                    placeholderTextColor={isDark ? "#3A3A3C" : "#C7C7CC"}
+                    style={[styles.textInput, { color: isDark ? "#FFF" : "#000", letterSpacing: isOtpSent ? 12 : 0 }]}
+                    keyboardType="number-pad"
+                  />
+                </Animated.View>
               </View>
 
-              <TouchableOpacity 
-                onPress={handleVerifyOtp} 
-                style={styles.primaryButton}
-                disabled={isLoading}
-              >
-                {isLoading ? <ActivityIndicator color="#fff" /> : (
-                  <Text style={styles.buttonText}>Verify & Login</Text>
-                )}
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                onPress={() => setIsOtpSent(false)} 
-                style={styles.secondaryAction}
-              >
-                <RefreshCcw size={16} color="#64748B" />
-                <Text style={styles.secondaryText}>Change Number</Text>
+              <TouchableOpacity style={styles.mainButton} onPress={() => !isOtpSent && setIsOtpSent(true)}>
+                <Text style={styles.buttonText}>{isOtpSent ? "VERIFY" : "SIGN IN"}</Text>
+                <ArrowRight size={20} color="#FFF" />
               </TouchableOpacity>
             </View>
-          )}
 
-          {/* Register Link */}
-          <TouchableOpacity 
-            onPress={() => router.push('/(auth)/register')} 
-            style={styles.footer}
-          >
-            <Text style={styles.footerText}>
-              Don't have an account? <Text style={styles.link}>Sign Up</Text>
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/(auth)/register')} style={styles.footer}>
+              <Animated.Text style={[styles.footerText, { color: subColor }]}>
+                NO ACCOUNT? <Text style={{ color: THEME.cyan, fontWeight: '900' }}>REGISTER</Text>
+              </Animated.Text>
+            </TouchableOpacity>
 
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  scrollContent: { padding: 24, flexGrow: 1 },
-  header: { marginBottom: 32, marginTop: 20 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#0F172A', letterSpacing: -0.5 },
-  subtitle: { fontSize: 16, color: '#64748B', marginTop: 8 },
-  
-  roleContainer: { flexDirection: 'row', gap: 12, marginBottom: 40 },
-  roleButton: { 
-    flex: 1, 
-    paddingVertical: 14, 
-    borderRadius: 12, 
-    borderWidth: 1.5, 
-    borderColor: '#E2E8F0', 
-    alignItems: 'center' 
-  },
-  roleActive: { borderColor: '#0D9488', backgroundColor: '#F0FDFA' },
-  roleText: { fontWeight: '600', color: '#64748B' },
-  roleTextActive: { color: '#0D9488' },
-
-  inputSection: { gap: 12 },
-  label: { fontSize: 14, fontWeight: '700', color: '#334155', marginLeft: 4 },
-  helperText: { fontSize: 13, color: '#64748B', marginBottom: 8, marginLeft: 4 },
-  
-  inputWrapper: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    backgroundColor: '#F8FAFC', 
-    borderWidth: 1.5, 
-    borderColor: '#E2E8F0', 
-    borderRadius: 12, 
-    paddingHorizontal: 16,
-    height: 60,
-    marginBottom: 12
-  },
-  inputIcon: { marginRight: 12 },
-  input: { flex: 1, fontSize: 18, color: '#0F172A' },
-
-  primaryButton: { 
-    backgroundColor: '#0D9488', 
-    height: 60, 
-    borderRadius: 12, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: 10,
-    marginTop: 8
-  },
-  buttonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
-
-  secondaryAction: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: 8, 
-    marginTop: 20 
-  },
-  secondaryText: { color: '#64748B', fontWeight: '500' },
-
-  footer: { marginTop: 'auto', paddingVertical: 20 },
-  footerText: { textAlign: 'center', color: '#64748B', fontSize: 15 },
-  link: { color: '#0D9488', fontWeight: 'bold' }
+  container: { flex: 1 },
+  content: { paddingHorizontal: 32, flexGrow: 1 },
+  header: { marginTop: 20, marginBottom: 60 },
+  themeToggle: { alignSelf: 'flex-end', padding: 8, marginBottom: 20 },
+  brandContainer: { alignItems: 'flex-start' },
+  titleRow: { flexDirection: 'row', alignItems: 'baseline' },
+  hindiTitle: { fontSize: 62, fontWeight: '800', letterSpacing: -2 },
+  latinTitle: { fontSize: 62, fontWeight: '100', marginLeft: 2 },
+  taglineRow: { flexDirection: 'row', alignItems: 'center', marginTop: 0, paddingLeft: 4 },
+  glowDot: { width: 8, height: 8, backgroundColor: THEME.cyan, borderRadius: 4, marginRight: 10, shadowColor: THEME.cyan, shadowRadius: 6, shadowOpacity: 0.9 },
+  tagline: { fontSize: 10, letterSpacing: 6, fontWeight: '900' },
+  heroSection: { marginBottom: 40, minHeight: 70 },
+  greetingText: { fontSize: 24, fontWeight: '300', lineHeight: 32 },
+  tabs: { flexDirection: 'row', gap: 32, marginBottom: 44 },
+  tabItem: { paddingVertical: 4 },
+  tabLabel: { fontSize: 16, fontWeight: '700' },
+  tabIndicator: { height: 2, backgroundColor: THEME.cyan, width: '100%', marginTop: 4 },
+  formContainer: { gap: 40 },
+  inputWrapper: { gap: 10 },
+  inputLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 2 },
+  inputLine: { borderBottomWidth: 1, height: 50, justifyContent: 'center' },
+  textInput: { fontSize: 22, padding: 0 },
+  mainButton: { backgroundColor: THEME.cyan, height: 60, borderRadius: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
+  buttonText: { color: '#FFF', fontSize: 16, fontWeight: '800', letterSpacing: 2 },
+  footer: { marginTop: 'auto', paddingVertical: 40, alignItems: 'center' },
+  footerText: { fontSize: 12, letterSpacing: 2 },
 });

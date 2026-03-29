@@ -6,39 +6,35 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#0D9488', // Primary Teal
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarActiveTintColor: '#00BAF2', // Signature Cyan
+        tabBarInactiveTintColor: '#636366',
+        headerShown: false, // Branding is handled within screens
         tabBarStyle: {
-          borderTopWidth: 1,
-          borderTopColor: '#E2E8F0',
-          height: 65,
-          paddingBottom: 10,
+          backgroundColor: '#000000', // Matches deep black theme
+          borderTopWidth: 0,
+          height: 85,
+          paddingBottom: 25,
+          paddingTop: 10,
         },
-        headerStyle: {
-          backgroundColor: '#fff',
-        },
-        headerShadowVisible: false,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-          fontSize: 20,
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: '800',
+          letterSpacing: 1,
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
-          tabBarLabel: 'Home',
-          headerTitle: 'CommunityConnect',
-          tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+          tabBarLabel: 'HOME',
+          tabBarIcon: ({ color }) => <Home size={22} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'My Profile',
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ color }) => <UserCircle size={24} color={color} />,
+          tabBarLabel: 'PROFILE',
+          tabBarIcon: ({ color }) => <UserCircle size={22} color={color} />,
         }}
       />
     </Tabs>
