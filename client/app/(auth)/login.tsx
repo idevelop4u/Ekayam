@@ -14,24 +14,21 @@ import {
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Phone, ShieldCheck, ArrowRight, RefreshCcw } from 'lucide-react-native';
-
-// 1. Fixed the import path and removed the external authService
-import { useAuth } from '../context/AuthContext'; 
+import { useAuth } from '../../context/AuthContext';
+import { authService } from '../../services/authService';
 
 export default function LoginScreen() {
   const router = useRouter();
-  
-  // 2. We pull our new OTP functions directly from the context
-  const { requestOtp, verifyOtp } = useAuth();
+  const { signIn } = useAuth();
   
   // State Management
   const [role, setRole] = useState<'user' | 'helper'>('user');
   const [phone, setPhone] = useState('');
-  const[otp, setOtp] = useState('');
+  const [otp, setOtp] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Step 1: Request OTP from Backend via Context
+  // Step 1: Request OTP from Backend
   const handleSendOtp = async () => {
     if (phone.length < 10) {
       Alert.alert("Invalid Number", "Please enter a valid 10-digit mobile number.");
@@ -40,18 +37,18 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-      // Calls the function we built in AuthContext
-      await requestOtp(phone); 
+      await authService.requestOtp(phone);
       setIsOtpSent(true);
-      Alert.alert("OTP Sent", "Please check your server console for the mock OTP.");
+      // For development, remind user to check the Node.js console
+      Alert.alert("OTP Sent", "Please check your messages (or server console for demo).");
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to send OTP");
+      Alert.alert("Error", err.toString());
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Step 2: Verify OTP and Login via Context
+  // Step 2: Verify OTP and Login
   const handleVerifyOtp = async () => {
     if (otp.length < 4) {
       Alert.alert("Invalid OTP", "Please enter the 4-digit code.");
@@ -60,20 +57,11 @@ export default function LoginScreen() {
 
     setIsLoading(true);
     try {
-      // Calls the function in AuthContext. It saves the token and user data automatically!
-      await verifyOtp(phone, otp);
-      
-      // 3. Send the user to the "Traffic Controller" (app/index.tsx)
-      // It will instantly read their new state and redirect them to their dashboard!
-      router.replace('/'); 
-      
+      const data = await authService.verifyOtp(phone, otp, role);
+      // 'signIn' updates the AuthContext and triggers the redirect logic
+      await signIn(data.role, data.token);
     } catch (err: any) {
-      // If backend throws "Name required for new users", we guide them to Sign Up
-      if (err.message && err.message.includes("Name required")) {
-        Alert.alert("Account Not Found", "Looks like you are new! Please sign up first.");
-      } else {
-        Alert.alert("Verification Failed", err.message || "The OTP entered is incorrect.");
-      }
+      Alert.alert("Verification Failed", "The OTP entered is incorrect.");
     } finally {
       setIsLoading(false);
     }
