@@ -32,12 +32,10 @@ export default function LoginScreen() {
   // Animation Refs
   const themeValue = useRef(new Animated.Value(1)).current; 
   const glowAnim = useRef(new Animated.Value(0.4)).current;
-  const titleScale = useRef(new Animated.Value(0.92)).current; // Title scale starts smaller
+  const titleScale = useRef(new Animated.Value(0.92)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
 
-  // 1. Entrance & Glowing Animations
   useEffect(() => {
-    // Title Scale & Fade Entrance
     Animated.parallel([
       Animated.timing(titleScale, {
         toValue: 1,
@@ -52,7 +50,6 @@ export default function LoginScreen() {
       })
     ]).start();
 
-    // Loop for the Cyan Glow
     Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
@@ -61,7 +58,6 @@ export default function LoginScreen() {
     ).start();
   }, []);
 
-  // 2. Typing Greeting Logic
   useEffect(() => {
     const fullText = role === 'User' ? "Looking for a helping hand?" : "Ready to change a life today?";
     let currentIdx = 0;
@@ -93,7 +89,6 @@ export default function LoginScreen() {
         <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.content} bounces={false} showsVerticalScrollIndicator={false}>
 
-            {/* Huge App Title Section with Scale Animation */}
             <View style={styles.header}>
               <TouchableOpacity onPress={toggleTheme} style={styles.themeToggle}>
                 {isDark ? <Sun size={24} color="#FBBF24" /> : <Moon size={24} color="#171717" />}
@@ -111,14 +106,12 @@ export default function LoginScreen() {
               </Animated.View>
             </View>
 
-            {/* Typing Greeting */}
             <View style={styles.heroSection}>
               <Animated.Text style={[styles.greetingText, { color: textColor }]}>
                 {displayedGreeting}<Text style={{ color: THEME.cyan }}>_</Text>
               </Animated.Text>
             </View>
 
-            {/* Tabs */}
             <View style={styles.tabs}>
               {['User', 'Helper'].map((t) => (
                 <TouchableOpacity key={t} onPress={() => { setRole(t as any); setIsOtpSent(false); }} style={styles.tabItem}>
@@ -128,7 +121,6 @@ export default function LoginScreen() {
               ))}
             </View>
 
-            {/* Form */}
             <View style={styles.formContainer}>
               <View style={styles.inputWrapper}>
                 <Animated.Text style={[styles.inputLabel, { color: subColor }]}>{isOtpSent ? "VERIFICATION" : "MOBILE NUMBER"}</Animated.Text>
@@ -136,6 +128,8 @@ export default function LoginScreen() {
                   <TextInput
                     placeholder={isOtpSent ? "0 0 0 0" : "91 00000 00000"}
                     placeholderTextColor={isDark ? "#3A3A3C" : "#C7C7CC"}
+                    // selectionColor ensures the blinking cursor is cyan
+                    selectionColor={THEME.cyan}
                     style={[styles.textInput, { color: isDark ? "#FFF" : "#000", letterSpacing: isOtpSent ? 12 : 0 }]}
                     keyboardType="number-pad"
                   />
@@ -183,7 +177,16 @@ const styles = StyleSheet.create({
   inputWrapper: { gap: 10 },
   inputLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 2 },
   inputLine: { borderBottomWidth: 1, height: 50, justifyContent: 'center' },
-  textInput: { fontSize: 22, padding: 0 },
+  textInput: { 
+    fontSize: 22, 
+    padding: 0,
+    // The Magic Fix for the blue box on Web:
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+      }
+    })
+  },
   mainButton: { backgroundColor: THEME.cyan, height: 60, borderRadius: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
   buttonText: { color: '#FFF', fontSize: 16, fontWeight: '800', letterSpacing: 2 },
   footer: { marginTop: 'auto', paddingVertical: 40, alignItems: 'center' },

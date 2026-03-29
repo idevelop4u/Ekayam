@@ -99,7 +99,6 @@ export default function RegisterScreen() {
 
             <View style={styles.header}>
               <View style={styles.topRow}>
-                {/* BACK OPTION: Top Arrow Navigation */}
                 <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={styles.backBtn}>
                   <ArrowLeft size={26} color={isDark ? "#FFF" : "#171717"} />
                 </TouchableOpacity>
@@ -145,6 +144,7 @@ export default function RegisterScreen() {
                       <TextInput 
                         placeholder="e.g. John Doe" 
                         placeholderTextColor={isDark ? "#3A3A3C" : "#C7C7CC"} 
+                        selectionColor={THEME.cyan}
                         style={[styles.textInput, { color: isDark ? "#FFF" : "#000" }]} 
                       />
                     </Animated.View>
@@ -155,6 +155,7 @@ export default function RegisterScreen() {
                       <TextInput 
                         placeholder="91 00000 00000" 
                         placeholderTextColor={isDark ? "#3A3A3C" : "#C7C7CC"} 
+                        selectionColor={THEME.cyan}
                         style={[styles.textInput, { color: isDark ? "#FFF" : "#000" }]} 
                         keyboardType="number-pad" 
                       />
@@ -168,6 +169,7 @@ export default function RegisterScreen() {
                     <TextInput 
                       placeholder="• • • •" 
                       placeholderTextColor={isDark ? "#3A3A3C" : "#C7C7CC"} 
+                      selectionColor={THEME.cyan}
                       style={[styles.textInput, { color: isDark ? "#FFF" : "#000", letterSpacing: 12 }]} 
                       keyboardType="number-pad" 
                     />
@@ -181,7 +183,6 @@ export default function RegisterScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* BACK OPTION: Bottom Text Link */}
             <TouchableOpacity onPress={() => router.push('/(auth)/login')} style={styles.footer}>
               <Animated.Text style={[styles.footerText, { color: subColor }]}>
                 ALREADY JOINED? <Text style={{ color: THEME.cyan, fontWeight: '900' }}>LOGIN</Text>
@@ -219,7 +220,15 @@ const styles = StyleSheet.create({
   inputWrapper: { gap: 10 },
   inputLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 2 },
   inputLine: { borderBottomWidth: 1, height: 45, justifyContent: 'center' },
-  textInput: { fontSize: 20, padding: 0 },
+  textInput: { 
+    fontSize: 20, 
+    padding: 0,
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none',
+      }
+    })
+  },
   mainButton: { backgroundColor: THEME.cyan, height: 56, borderRadius: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
   buttonText: { color: '#FFF', fontSize: 16, fontWeight: '800', letterSpacing: 2 },
   footer: { marginTop: 'auto', paddingVertical: 35, alignItems: 'center' },
