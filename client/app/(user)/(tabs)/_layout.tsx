@@ -1,18 +1,46 @@
 import React from 'react';
-import { Stack } from 'expo-router';
-import { AuthProvider } from './context/AuthContext';
+import { Tabs } from 'expo-router';
+import { Home, UserCircle } from 'lucide-react-native';
 
-export default function RootLayout() {
+export default function TabLayout() {
   return (
-    // Wrapping the whole app in the AuthProvider we created
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        {/* We define our main routing screens/groups here */}
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(user)" options={{ headerShown: false }} />
-        <Stack.Screen name="(helper)" options={{ headerShown: false }} />
-      </Stack>
-    </AuthProvider>
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: '#0D9488', // Primary Teal
+        tabBarInactiveTintColor: '#94a3b8',
+        tabBarStyle: {
+          borderTopWidth: 1,
+          borderTopColor: '#E2E8F0',
+          height: 65,
+          paddingBottom: 10,
+        },
+        headerStyle: {
+          backgroundColor: '#fff',
+        },
+        headerShadowVisible: false,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+          fontSize: 20,
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Dashboard',
+          tabBarLabel: 'Home',
+          headerTitle: 'CommunityConnect',
+          tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'My Profile',
+          tabBarLabel: 'Profile',
+          tabBarIcon: ({ color }) => <UserCircle size={24} color={color} />,
+        }}
+      />
+    </Tabs>
   );
 }
