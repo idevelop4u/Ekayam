@@ -18,7 +18,7 @@ export default function TabLayout() {
           paddingTop: 12,
         },
         tabBarLabelStyle: {
-          fontSize: 12, // Larger label
+          fontSize: 12, 
           fontWeight: '800',
         },
       }}
@@ -42,6 +42,22 @@ export default function TabLayout() {
         options={{
           tabBarLabel: 'PROFILE',
           tabBarIcon: ({ color }) => <UserCircle size={28} color={color} />,
+        }}
+      />
+
+      {/* HIDDEN SCREENS (Accessible via router.push but not seen in nav bar) */}
+      <Tabs.Screen
+        name="task"
+        options={{
+          href: null, 
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="notification"
+        options={{
+          href: null,
+          headerShown: false,
         }}
       />
     </Tabs>
