@@ -28,6 +28,12 @@ export default function LoginScreen() {
   const [role, setRole] = useState<'User' | 'Helper'>('User');
   const [displayedGreeting, setDisplayedGreeting] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
+  
+  // Form state
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
 
   // Animation Refs
   const themeValue = useRef(new Animated.Value(1)).current; 
@@ -77,6 +83,16 @@ export default function LoginScreen() {
     setIsDark(nextIsDark);
   };
 
+  const handleSignIn = () => {
+    if (!isOtpSent) {
+      // Send OTP logic here
+      setIsOtpSent(true);
+    } else {
+      // Verify OTP and sign in logic here
+      console.log({ mobileNumber, email, password, otp, role });
+    }
+  };
+
   const bgColor = themeValue.interpolate({ inputRange: [0, 1], outputRange: [THEME.light.bg, THEME.dark.bg] });
   const textColor = themeValue.interpolate({ inputRange: [0, 1], outputRange: [THEME.light.text, THEME.dark.text] });
   const subColor = themeValue.interpolate({ inputRange: [0, 1], outputRange: [THEME.light.sub, THEME.dark.sub] });
@@ -86,7 +102,7 @@ export default function LoginScreen() {
     <Animated.View style={[styles.container, { backgroundColor: bgColor }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
       <SafeAreaView style={{ flex: 1 }}>
-        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.content} bounces={false} showsVerticalScrollIndicator={false}>
 
             <View style={styles.header}>
@@ -122,21 +138,81 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.formContainer}>
-              <View style={styles.inputWrapper}>
-                <Animated.Text style={[styles.inputLabel, { color: subColor }]}>{isOtpSent ? "VERIFICATION" : "MOBILE NUMBER"}</Animated.Text>
-                <Animated.View style={[styles.inputLine, { borderBottomColor: borderColor }]}>
-                  <TextInput
-                    placeholder={isOtpSent ? "0 0 0 0" : "91 00000 00000"}
-                    placeholderTextColor={isDark ? "#3A3A3C" : "#C7C7CC"}
-                    // selectionColor ensures the blinking cursor is cyan
-                    selectionColor={THEME.cyan}
-                    style={[styles.textInput, { color: isDark ? "#FFF" : "#000", letterSpacing: isOtpSent ? 12 : 0 }]}
-                    keyboardType="number-pad"
-                  />
-                </Animated.View>
-              </View>
+              {!isOtpSent ? (
+                <>
+                  {/* Mobile Number */}
+                  <View style={styles.inputWrapper}>
+                    <Animated.Text style={[styles.inputLabel, { color: subColor }]}>MOBILE NUMBER</Animated.Text>
+                    <Animated.View style={[styles.inputLine, { borderBottomColor: borderColor }]}>
+                      <TextInput
+                        value={mobileNumber}
+                        onChangeText={setMobileNumber}
+                        placeholder="91 00000 00000"
+                        placeholderTextColor={isDark ? "#3A3A3C" : "#C7C7CC"}
+                        selectionColor={THEME.cyan}
+                        style={[styles.textInput, { color: isDark ? "#FFF" : "#000" }]}
+                        keyboardType="phone-pad"
+                      />
+                    </Animated.View>
+                  </View>
 
-              <TouchableOpacity style={styles.mainButton} onPress={() => !isOtpSent && setIsOtpSent(true)}>
+                  {/* Email */}
+                  <View style={styles.inputWrapper}>
+                    <Animated.Text style={[styles.inputLabel, { color: subColor }]}>EMAIL ID</Animated.Text>
+                    <Animated.View style={[styles.inputLine, { borderBottomColor: borderColor }]}>
+                      <TextInput
+                        value={email}
+                        onChangeText={setEmail}
+                        placeholder="email@example.com"
+                        placeholderTextColor={isDark ? "#3A3A3C" : "#C7C7CC"}
+                        selectionColor={THEME.cyan}
+                        style={[styles.textInput, { color: isDark ? "#FFF" : "#000" }]}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                      />
+                    </Animated.View>
+                  </View>
+
+                  {/* Password */}
+                  <View style={styles.inputWrapper}>
+                    <Animated.Text style={[styles.inputLabel, { color: subColor }]}>PASSWORD</Animated.Text>
+                    <Animated.View style={[styles.inputLine, { borderBottomColor: borderColor }]}>
+                      <TextInput
+                        value={password}
+                        onChangeText={setPassword}
+                        placeholder="••••••••"
+                        placeholderTextColor={isDark ? "#3A3A3C" : "#C7C7CC"}
+                        selectionColor={THEME.cyan}
+                        style={[styles.textInput, { color: isDark ? "#FFF" : "#000" }]}
+                        secureTextEntry
+                      />
+                    </Animated.View>
+                  </View>
+                </>
+              ) : (
+                /* OTP Verification */
+                <View style={styles.inputWrapper}>
+                  <Animated.Text style={[styles.inputLabel, { color: subColor }]}>VERIFICATION CODE</Animated.Text>
+                  <Animated.View style={[styles.inputLine, { borderBottomColor: borderColor }]}>
+                    <TextInput
+                      value={otp}
+                      onChangeText={setOtp}
+                      placeholder="0 0 0 0"
+                      placeholderTextColor={isDark ? "#3A3A3C" : "#C7C7CC"}
+                      selectionColor={THEME.cyan}
+                      style={[styles.textInput, { color: isDark ? "#FFF" : "#000", letterSpacing: 12, textAlign: 'center' }]}
+                      keyboardType="number-pad"
+                      maxLength={4}
+                    />
+                  </Animated.View>
+                  <TouchableOpacity onPress={() => setIsOtpSent(false)} style={styles.backLink}>
+                    <Text style={{ color: THEME.cyan, fontSize: 12, letterSpacing: 1 }}>← BACK TO LOGIN</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <TouchableOpacity style={styles.mainButton} onPress={handleSignIn}>
                 <Text style={styles.buttonText}>{isOtpSent ? "VERIFY" : "SIGN IN"}</Text>
                 <ArrowRight size={20} color="#FFF" />
               </TouchableOpacity>
@@ -158,7 +234,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { paddingHorizontal: 32, flexGrow: 1 },
-  header: { marginTop: 20, marginBottom: 60 },
+  header: { marginTop: 20, marginBottom: 40 },
   themeToggle: { alignSelf: 'flex-end', padding: 8, marginBottom: 20 },
   brandContainer: { alignItems: 'flex-start' },
   titleRow: { flexDirection: 'row', alignItems: 'baseline' },
@@ -167,28 +243,28 @@ const styles = StyleSheet.create({
   taglineRow: { flexDirection: 'row', alignItems: 'center', marginTop: 0, paddingLeft: 4 },
   glowDot: { width: 8, height: 8, backgroundColor: THEME.cyan, borderRadius: 4, marginRight: 10, shadowColor: THEME.cyan, shadowRadius: 6, shadowOpacity: 0.9 },
   tagline: { fontSize: 10, letterSpacing: 6, fontWeight: '900' },
-  heroSection: { marginBottom: 40, minHeight: 70 },
+  heroSection: { marginBottom: 32, minHeight: 70 },
   greetingText: { fontSize: 24, fontWeight: '300', lineHeight: 32 },
-  tabs: { flexDirection: 'row', gap: 32, marginBottom: 44 },
+  tabs: { flexDirection: 'row', gap: 32, marginBottom: 32 },
   tabItem: { paddingVertical: 4 },
   tabLabel: { fontSize: 16, fontWeight: '700' },
   tabIndicator: { height: 2, backgroundColor: THEME.cyan, width: '100%', marginTop: 4 },
-  formContainer: { gap: 40 },
+  formContainer: { gap: 24 },
   inputWrapper: { gap: 10 },
   inputLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 2 },
   inputLine: { borderBottomWidth: 1, height: 50, justifyContent: 'center' },
   textInput: { 
-    fontSize: 22, 
+    fontSize: 18, 
     padding: 0,
-    // The Magic Fix for the blue box on Web:
     ...Platform.select({
       web: {
         outlineStyle: 'none',
       }
     })
   },
-  mainButton: { backgroundColor: THEME.cyan, height: 60, borderRadius: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
+  mainButton: { backgroundColor: THEME.cyan, height: 60, borderRadius: 4, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 16 },
   buttonText: { color: '#FFF', fontSize: 16, fontWeight: '800', letterSpacing: 2 },
-  footer: { marginTop: 'auto', paddingVertical: 40, alignItems: 'center' },
+  backLink: { marginTop: 16, alignSelf: 'center' },
+  footer: { marginTop: 'auto', paddingVertical: 32, alignItems: 'center' },
   footerText: { fontSize: 12, letterSpacing: 2 },
 });
