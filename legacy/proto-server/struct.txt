@@ -1,7 +1,0 @@
-Server/
-├── models/
-│   └── User.js       <-- User & Helper Schema
-├── routes/
-│   └── auth.js       <-- OTP & Login Routes
-├── .env              <-- Database & Secret keys
-└── index.js          <-- Main Entry Point
