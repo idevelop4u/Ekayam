@@ -1,25 +1,25 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Home, UserCircle } from 'lucide-react-native';
+import { Home, UserCircle, MessageSquare } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#00BAF2', // Signature Cyan
-        tabBarInactiveTintColor: '#636366',
-        headerShown: false, // Branding is handled within screens
+        tabBarActiveTintColor: '#00BAF2',
+        tabBarInactiveTintColor: '#8E8E93', 
+        headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#000000', // Matches deep black theme
-          borderTopWidth: 0,
-          height: 85,
-          paddingBottom: 25,
-          paddingTop: 10,
+          backgroundColor: '#000000',
+          borderTopWidth: 1,
+          borderTopColor: '#2C2C2E',
+          height: 100, // Taller for easier reach
+          paddingBottom: 35,
+          paddingTop: 12,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 12, // Larger label
           fontWeight: '800',
-          letterSpacing: 1,
         },
       }}
     >
@@ -27,14 +27,21 @@ export default function TabLayout() {
         name="index"
         options={{
           tabBarLabel: 'HOME',
-          tabBarIcon: ({ color }) => <Home size={22} color={color} />,
+          tabBarIcon: ({ color }) => <Home size={28} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          tabBarLabel: 'CHAT',
+          tabBarIcon: ({ color }) => <MessageSquare size={28} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           tabBarLabel: 'PROFILE',
-          tabBarIcon: ({ color }) => <UserCircle size={22} color={color} />,
+          tabBarIcon: ({ color }) => <UserCircle size={28} color={color} />,
         }}
       />
     </Tabs>
