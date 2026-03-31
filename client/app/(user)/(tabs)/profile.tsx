@@ -73,17 +73,19 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Share, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LogOut, Heart, Settings, Shield, ChevronRight, Gift, Copy } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard'; // Ensure this is installed: npx expo install expo-clipboard
+import { LogOut, Heart, Settings, Shield, ChevronRight, Gift, Copy, AlertTriangle } from 'lucide-react-native';
+import * as Clipboard from 'expo-clipboard';
+import api from '../../../services/api';
 
 const THEME = {
   cyan: '#00BAF2',
-  dark: { bg: '#000000', text: '#FFFFFF', sub: '#AEAEB2', border: '#3A3A3C' }
+  dark: { bg: '#000000', text: '#FFFFFF', sub: '#AEAEB2', border: '#3A3A3C' },
+  urgent: '#FF453A'
 };
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const referralCode = "EPICS-72X"; // Demo Referral Code
+  const referralCode = "EPICS-72X";
 
   const handleLogout = () => router.replace('/(auth)/login');
 
@@ -102,6 +104,26 @@ export default function ProfileScreen() {
     }
   };
 
+  const handlePanic = async () => {
+    try {
+      await api.post('/alerts/panic', {
+        latitude: 12.9716, // mock location
+        longitude: 77.5946
+      });
+      Alert.prompt(
+        "Panic Triggered!", 
+        "Loud alarm and trusted contacts notified. Enter your PIN to disable.",
+        [
+          { text: "Dismiss", style: "cancel" },
+          { text: "Disable", onPress: () => Alert.alert("Panic Disabled") }
+        ],
+        "secure-text"
+      );
+    } catch (err: any) {
+      Alert.alert("Error", err.response?.data?.message || "Could not trigger Panic Mode");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <SafeAreaView style={{ flex: 1 }}>
@@ -116,18 +138,19 @@ export default function ProfileScreen() {
 
           <View style={styles.menuGroup}>
             <ProfileOption icon={<Heart size={24} color="#FFF" />} title="PREFERRED HELPERS" />
-            <ProfileOption icon={<Shield size={24} color="#FFF" />} title="TRUST & SAFETY" />
             <ProfileOption icon={<Settings size={24} color="#FFF" />} title="SETTINGS" />
-            
-            {/* New Refer & Earn Button */}
             <ProfileOption 
               icon={<Gift size={24} color={THEME.cyan} />} 
               title="REFER & EARN" 
               onPress={onShare}
             />
+            <ProfileOption 
+              icon={<AlertTriangle size={24} color={THEME.urgent} />} 
+              title="TRIGGER PANIC MODE" 
+              onPress={handlePanic}
+            />
           </View>
 
-          {/* Referral Code Display Area */}
           <View style={styles.referralContainer}>
             <Text style={styles.referralLabel}>YOUR UNIQUE CODE</Text>
             <View style={styles.codeBox}>
@@ -140,7 +163,7 @@ export default function ProfileScreen() {
 
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Text style={styles.logoutText}>LOG OUT</Text>
-            <LogOut size={24} color="#FF453A" />
+            <LogOut size={24} color={THEME.urgent} />
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>

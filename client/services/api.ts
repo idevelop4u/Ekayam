@@ -39,7 +39,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 1. Create the Axios instance
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api', // Use your machine's IP for physical device testing
+  baseURL: 'http://localhost:3001/api', // Use your machine's IP for physical device testing
   headers: {
     'Content-Type': 'application/json',
   },

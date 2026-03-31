@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import api from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { connectSocket, disconnectSocket } from '../services/socket';
 
 interface AuthContextType {
   user: any;
@@ -20,9 +22,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Check for existing session on load
   useEffect(() => {
     const loadStorage = async () => {
-      const storedToken = localStorage.getItem('token');
-      if (storedToken) setToken(storedToken);
-      setIsLoading(false);
+      try {
+        const storedToken = await AsyncStorage.getItem('userToken');
+        if (storedToken) {
+          setToken(storedToken);
+          await connectSocket(); // Connect to real-time events on reload
+        }
+      } catch (error) {
+        console.error("Error loading token:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     loadStorage();
   }, []);
@@ -34,23 +44,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       setToken(token);
       setUser(userData);
-      localStorage.setItem('token', token);
+      await AsyncStorage.setItem('userToken', token);
+      
+      await connectSocket(); // Connect immediately on new login
 
       // Explicit Redirect based on your UI tabs
       if (selectedRole === 'User') {
         router.replace('/(user)/(tabs)');
       } else {
-        router.replace('/(helper)/dashboard');
+        router.replace('/(helper)/(tabs)'); // ensure proper tabs folder redirection based on helper structure
       }
-    } catch (err) {
-      alert("Invalid Credentials");
+    } catch (err: any) {
+      console.error(err);
+      throw err; // throw to handle it in the UI component
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('token');
+    await AsyncStorage.removeItem('userToken');
+    disconnectSocket(); // Disconnect safely
     router.replace('/(auth)/login');
   };
 

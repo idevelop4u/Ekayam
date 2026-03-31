@@ -38,12 +38,16 @@ export default function CreateTaskForm() {
   // FETCH LOCATION: Required for GeoJSON backend storage
   const handleGetLocation = () => {
     if (Platform.OS === 'web') {
+      if (!navigator.geolocation) {
+        alert("Geolocation is not supported by your browser");
+        return;
+      }
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          Alert.alert("Success", "Location pinned successfully.");
+          alert("Location pinned successfully!");
         },
-        () => Alert.alert("Error", "Please enable location permissions in your browser."),
+        (error) => alert(`Could not retrieve location: ${error.message}`),
         { enableHighAccuracy: true }
       );
     } else {
@@ -54,40 +58,43 @@ export default function CreateTaskForm() {
   // SUBMIT HANDLER: Hits POST /api/tasks
   const handleSubmit = async () => {
     if (!title || !description) {
-      Alert.alert("Required", "Please provide a title and description.");
+      Platform.OS === 'web' ? alert("Please provide a title and description.") : Alert.alert("Required", "Please provide a title and description.");
       return;
     }
 
     if (!coords) {
-      Alert.alert("Location Required", "Please pin your location before submitting.");
+      Platform.OS === 'web' ? alert("Please pin your location before submitting.") : Alert.alert("Location Required", "Please pin your location before submitting.");
       return;
     }
 
     setLoading(true);
     try {
-      // payload must match what taskController.js expects
       const payload = {
         title,
         description,
         category: CATEGORY_MAP[category] || 'other',
         urgency: urgency.toLowerCase(),
-        latitude: coords.lat, 
+        latitude: coords.lat,
         longitude: coords.lng,
-        address: "Current User Location", // Required by backend schema
-        city: "Local",
+        address: "Current User Location",
+        city: "Local"
       };
 
-      // api.ts automatically attaches the JWT token now
       const response = await api.post('/tasks', payload);
 
       if (response.status === 201) {
-        Alert.alert("Success", "Your request is now live.", [
-          { text: "OK", onPress: () => router.replace('/(user)/(tabs)') }
-        ]);
+        if (Platform.OS === 'web') {
+          alert("Success! Your request is now live.");
+          router.replace('/(user)/(tabs)');
+        } else {
+          Alert.alert("Success", "Your request is now live.", [
+            { text: "OK", onPress: () => router.replace('/(user)/(tabs)') }
+          ]);
+        }
       }
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || "Submission failed. Your session may have expired.";
-      Alert.alert("Error", errorMsg);
+      Platform.OS === 'web' ? alert(errorMsg) : Alert.alert("Error", errorMsg);
       if (error.response?.status === 401) {
         router.replace('/(auth)/login');
       }

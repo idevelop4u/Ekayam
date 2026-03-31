@@ -99,46 +99,16 @@ export default function LoginScreen() {
   };
 
   const handleSignIn = async () => {
-    // PHASE 1: Verify Credentials -> Trigger OTP in Terminal
-    if (!isOtpSent) {
-      if (!email || !password) {
-        Alert.alert("Error", "Please fill in all fields");
-        return;
-      }
-
-      try {
-        const response = await api.post('/auth/login', { email, password });
-        
-        if (response.data.status === 'pending_verification') {
-          setTargetPhone(response.data.phone);
-          setIsOtpSent(true); // Switch to OTP View
-        }
-      } catch (error: any) {
-        const errorMsg = error.response?.data?.message || "Login failed. Check your credentials.";
-        Alert.alert("Login Error", errorMsg);
-      }
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
-    // PHASE 2: Verify OTP -> Complete Login
     try {
-      const response = await api.post('/auth/verify-otp', {
-        phone: targetPhone,
-        otp: otp
-      });
-
-      if (response.status === 200) {
-        const { token } = response.data;
-        // Use your context logic to save token and redirect
-        // For direct navigation:
-        if (role === 'User') {
-          router.replace('/(user)/(tabs)');
-        } else {
-          router.replace('/(helper)/(tabs)');
-        }
-      }
+      await login(email, password, role);
     } catch (error: any) {
-      Alert.alert("Verification Error", "Invalid code. Please check the terminal.");
+      const errorMsg = error.response?.data?.message || "Login failed. Check your credentials.";
+      Alert.alert("Login Error", errorMsg);
     }
   };
 

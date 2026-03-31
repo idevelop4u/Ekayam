@@ -1,11 +1,11 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   View, Text, TouchableOpacity, ScrollView, StyleSheet, 
-  Animated, StatusBar, ActivityIndicator, RefreshControl 
+  Animated, StatusBar, ActivityIndicator, RefreshControl, Alert, Platform
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, ShieldCheck, Sun, Moon, Bell, Clock } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import api from '../../../services/api'; 
 
 const THEME = {
@@ -24,8 +24,14 @@ export default function UserDashboard() {
   const themeValue = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0.4)).current;
 
+  // Re-fetch data every time screen focuses
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyRequests();
+    }, [])
+  );
+
   useEffect(() => {
-    fetchMyRequests();
     Animated.loop(
       Animated.sequence([
         Animated.timing(glowAnim, { toValue: 1, duration: 1200, useNativeDriver: true }),
@@ -98,13 +104,35 @@ export default function UserDashboard() {
             </View>
           </View>
 
-          <TouchableOpacity style={styles.mainAction} onPress={() => router.push('/task')}>
-            <View style={styles.actionLeft}>
-              <Text style={styles.actionTitle}>REQUEST HELP</Text>
-              <Text style={styles.actionSub}>Find a volunteer nearby</Text>
-            </View>
-            <View style={styles.plusCircle}><Plus size={32} color="#FFF" /></View>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 15, marginBottom: 50 }}>
+            <TouchableOpacity style={[styles.mainAction, { flex: 2 }]} onPress={() => router.push('/task')}>
+              <View style={styles.actionLeft}>
+                <Text style={styles.actionTitle}>REQUEST HELP</Text>
+                <Text style={styles.actionSub}>Find a volunteer nearby</Text>
+              </View>
+              <View style={styles.plusCircle}><Plus size={28} color="#FFF" /></View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.mainAction, { flex: 1, backgroundColor: '#FF453A', padding: 20, justifyContent: 'center', alignItems: 'center' }]} 
+              onPress={async () => {
+                try {
+                  await api.post('/tasks/sos', {
+                    latitude: 12.9716, // fallback
+                    longitude: 77.5946, 
+                    address: "Current Location",
+                    city: "Local"
+                  });
+                  Alert.alert("SOS Triggered", "Emergency broadcast sent to all nearby helpers and trusted contacts!");
+                  fetchMyRequests(); // refresh active tasks with new SOS task
+                } catch (err: any) {
+                  Alert.alert("SOS Failed", err.response?.data?.message || "Could not trigger SOS.");
+                }
+              }}
+            >
+              <Text style={{ color: '#FFF', fontSize: 24, fontWeight: '900', textAlign: 'center' }}>SOS</Text>
+            </TouchableOpacity>
+          </View>
 
           <Animated.Text style={[styles.sectionLabel, { color: subColor }]}>YOUR ACTIVE REQUESTS</Animated.Text>
           
@@ -112,23 +140,110 @@ export default function UserDashboard() {
             <ActivityIndicator color={THEME.cyan} style={{marginTop: 30}} />
           ) : tasks.length > 0 ? (
             tasks.map((task) => (
-              <Animated.View 
-                key={task._id} 
-                style={[styles.taskCard, { backgroundColor: isDark ? '#111' : '#FFF', borderColor: borderColor }]}
+              <TouchableOpacity
+                key={task._id}
+                activeOpacity={0.8}
+                onPress={() => router.push('/chat')}
               >
+                <Animated.View 
+                  style={[styles.taskCard, { backgroundColor: isDark ? '#111' : '#FFF', borderColor: borderColor }]}
+                >
                 <View style={styles.taskHeader}>
                   <Animated.Text style={[styles.taskTitle, { color: textColor }]}>{task.title}</Animated.Text>
-                  <View style={[styles.statusBadge, { backgroundColor: task.status === 'open' ? '#34C759' : THEME.cyan }]}>
+                  <View style={[styles.statusBadge, { backgroundColor: task.status === 'open' ? '#34C759' : task.status === 'cancelled' ? THEME.light.sub : THEME.cyan }]}>
                     <Text style={styles.statusText}>{task.status.replace('_', ' ').toUpperCase()}</Text>
                   </View>
                 </View>
-                <View style={styles.taskFooter}>
-                  <Clock size={14} color={subColor} />
-                  <Animated.Text style={{color: subColor, fontSize: 12}}>
-                    {new Date(task.createdAt).toLocaleDateString()}
-                  </Animated.Text>
+                
+                {task.status === 'accepted' && (
+                  <View style={{ backgroundColor: THEME.cyan + '20', padding: 10, borderRadius: 8, marginVertical: 10, borderWidth: 1, borderColor: THEME.cyan }}>
+                    <Text style={{ color: THEME.cyan, fontWeight: '800', fontSize: 12 }}>SHARE THIS OTP WITH VOLUNTEER:</Text>
+                    <Text style={{ color: textColor, fontWeight: '900', fontSize: 24, letterSpacing: 4, marginTop: 4 }}>
+                      {task.otp || '****'}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={[styles.taskFooter, { justifyContent: 'space-between' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Clock size={14} color={subColor} />
+                    <Animated.Text style={{color: subColor, fontSize: 12}}>
+                      {new Date(task.createdAt).toLocaleDateString()}
+                    </Animated.Text>
+                  </View>
+
+                  {task.status === 'pending_approval' && (
+                    <TouchableOpacity 
+                      style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: THEME.cyan, borderRadius: 8 }}
+                      onPress={async () => {
+                        try {
+                          const appsRes = await api.get(`/help-requests/task/${task._id}`);
+                          const apps = appsRes.data.applications || [];
+                          if (apps.length === 0) {
+                            Alert.alert("No Applications", "No helpers have applied yet.");
+                            return;
+                          }
+                          const appToApprove = apps[0];
+                          Alert.alert(
+                            "Helper Applied!",
+                            `Would you like to approve ${appToApprove.helper?.username || 'this helper'}?`,
+                            [
+                              { text: "Cancel", style: 'cancel' },
+                              { text: "Approve", onPress: async () => {
+                                await api.post(`/help-requests/${appToApprove._id}/approve`);
+                                
+                                // Generate OTP for the upcoming completion
+                                try {
+                                  await api.post(`/tasks/${task._id}/generate-otp`);
+                                } catch (e) { console.log('OTP generator error handled'); }
+                                
+                                Alert.alert("Approved", "Task has started!");
+                                fetchMyRequests();
+                              }}
+                            ]
+                          );
+                        } catch (err) {
+                          Alert.alert("Error", "Could not load applications");
+                        }
+                      }}
+                    >
+                      <Text style={{ color: '#000', fontSize: 12, fontWeight: '700' }}>VIEW APPLICANTS</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {task.status === 'open' && (
+                    <TouchableOpacity 
+                      style={{ paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#FF453A20', borderRadius: 8 }}
+                      onPress={async () => {
+                        const doCancel = async () => {
+                          try {
+                            await api.post(`/tasks/${task._id}/cancel`, { reason: 'Cancelled by requester' });
+                            Platform.OS === 'web' ? alert("Your request has been cancelled.") : Alert.alert("Cancelled", "Your request has been cancelled.");
+                            fetchMyRequests(); // refresh list
+                          } catch (err: any) {
+                            const msg = err.response?.data?.message || "Failed to cancel task";
+                            Platform.OS === 'web' ? alert(msg) : Alert.alert("Error", msg);
+                          }
+                        };
+
+                        if (Platform.OS === 'web') {
+                          if (window.confirm("Are you sure you want to cancel this request?")) {
+                            doCancel();
+                          }
+                        } else {
+                          Alert.alert("Cancel Request", "Are you sure you want to cancel this request?", [
+                            { text: "No", style: "cancel" },
+                            { text: "Yes, Cancel", onPress: doCancel, style: "destructive" }
+                          ]);
+                        }
+                      }}
+                    >
+                      <Text style={{ color: '#FF453A', fontSize: 12, fontWeight: '700' }}>CANCEL</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </Animated.View>
+            </TouchableOpacity>
             ))
           ) : (
             <Animated.View style={[styles.emptyState, { borderTopColor: borderColor }]}>
