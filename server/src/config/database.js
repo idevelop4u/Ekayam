@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    let mongoURI = process.env.MONGODB_URI || 'mongodb+srv://puspal23bhi10088_db_user:TheDev1oper070801@community-app.iizv2rh.mongodb.net/?appName=community-app';
+    let mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
     
     // Use Memory Server if in testing mode where MongoDB isn't available
     if (process.env.USE_MEMORY_DB === 'true') {

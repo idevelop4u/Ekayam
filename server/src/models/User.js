@@ -1,34 +1,56 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+
+
+
 const userSchema = new mongoose.Schema({
-  // Basic Info (existing)
+  // --- Fields from your Register.tsx ---
+  
+  name: {
+    type: String,
+    required: [true, 'Full name is required'],
+    trim: true,
+  },
+  email: {
+    type: String,
+    required: [true, 'Email is required'],
+    unique: true,
+    lowercase: true,
+    trim: true,
+  },
+  password: {
+    type: String,
+    required: [true, 'Password is required'],
+    minlength: 6,
+  },
+  // Consolidating phone fields to prevent E11000 null errors
+  phoneNumber: {
+    type: String,
+    sparse: true, // Allows multiple nulls if user doesn't provide phone initially
+    trim: true,
+  },
+  // Field for Aadhar collected in your form
+  aadharNumber: {
+    type: String,
+    unique: true,
+    sparse: true,
+    trim: true,
+  },
+  // Mapped from your 'User'/'Helper' tabs
+  rolePreference: {
+    type: String,
+    enum: ['requester', 'helper'],
+    default: 'requester',
+  },
+
+  // --- CommunityConnect Core Features ---
+  
   username: {
     type: String,
     unique: true,
     sparse: true,
     trim: true,
-  },
-  phoneNumber: {
-    type: String,
-    unique: true,
-    sparse: true,
-    trim: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-  },
-  name: {
-    type: String,
-    // Required if phoneNumber based registration is used
-  },
-  password: {
-    type: String,
-    // Not required for OAuth users or guests - tokens/OTP used instead
   },
   digitalCredits: {
     type: Number,
@@ -48,70 +70,30 @@ const userSchema = new mongoose.Schema({
   }],
 
   // Profile Information
-  phone: {
-    type: String,
-    trim: true,
-  },
-  phoneVerified: {
-    type: Boolean,
-    default: false,
-  },
   profilePhoto: {
-    type: String, // URL or file path
+    type: String,
   },
   bio: {
     type: String,
     maxlength: 500,
   },
-  primaryLanguage: {
-    type: String,
-    default: 'en',
-  },
-
-  // Role & Preferences
-  rolePreference: {
-    type: String,
-    enum: ['helper', 'requester', 'both'],
-    default: 'both',
-  },
-  isGuest: {
+  
+  // Verification Status
+  phoneVerified: {
     type: Boolean,
     default: false,
   },
-
-  // Location (for helpers - using GeoJSON)
-  location: {
-    type: {
-      type: String,
-      enum: ['Point'],
-      default: 'Point',
-    },
-    coordinates: {
-      type: [Number], // [longitude, latitude]
-      default: [0, 0],
-    },
-    address: String,
-    city: String,
-  },
-  locationUpdatedAt: {
-    type: Date,
-  },
-
-  // Identity Verification
   idVerified: {
     type: Boolean,
     default: false,
   },
   verificationMethod: {
     type: String,
-    enum: ['aadhar', 'phone', 'college_id', 'none'],
+    enum: ['none', 'phone', 'aadhar', 'college_id'],
     default: 'none',
   },
-  verificationDetails: {
-    type: Object, // Store last 4 digits, etc.
-  },
 
-  // Gamification
+  // Stats & Gamification
   points: {
     type: Number,
     default: 0,
@@ -120,80 +102,29 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 1,
   },
-  badges: [{
-    type: String, // e.g., "Reliable Helper", "Friendly", "Always On Time"
-  }],
-  achievements: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Achievement',
-  }],
   certificateLevel: {
     type: String,
     enum: ['none', 'bronze', 'silver', 'gold', 'platinum'],
     default: 'none',
   },
-
-  // Statistics
-  tasksHelped: {
+  tasksCompleted: {
     type: Number,
     default: 0,
   },
-  tasksRequested: {
+  tasksHelped: {
     type: Number,
     default: 0,
   },
   averageRating: {
     type: Number,
     default: 0,
-    min: 0,
-    max: 5,
   },
   totalReviews: {
     type: Number,
     default: 0,
   },
 
-  // Privacy & Settings
-  trustedContacts: [{
-    name: String,
-    phone: String,
-  }],
-  notificationsEnabled: {
-    type: Boolean,
-    default: true,
-  },
-  visibilityRadius: {
-    type: Number, // in kilometers
-    default: 10,
-  },
-
-  // OAuth
-  googleId: {
-    type: String,
-    sparse: true,
-  },
-  appleId: {
-    type: String,
-    sparse: true,
-  },
-
-  // FCM Push Token
-  fcmToken: {
-    type: String,
-  },
-
-  // Referral
-  referralCode: {
-    type: String,
-    unique: true,
-    sparse: true,
-  },
-  referredBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
-
-  // Timestamps
+  // System fields
   lastActiveAt: {
     type: Date,
     default: Date.now,
@@ -205,19 +136,22 @@ const userSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
-  },
+  }
+}, {
+  timestamps: true
 });
 
-// Create 2dsphere index for geolocation queries
-userSchema.index({ 'location': '2dsphere' });
+// Middleware to hash password before saving
+// userSchema.pre('save', async function (next) {
+//   if (!this.isModified('password')) return next();
+//   const salt = await bcrypt.genSalt(10);
+//   this.password = await bcrypt.hash(this.password, salt);
+//   next();
+// });
 
-// Hash password before saving
 userSchema.pre('save', async function () {
-  // Update the updatedAt timestamp
-  this.updatedAt = new Date();
-
-  if (!this.isModified('password') || !this.password) return;
-
+  if (!this.isModified('password')) return;
+  
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
@@ -228,44 +162,20 @@ userSchema.methods.comparePassword = function (candidatePassword) {
   return bcrypt.compareSync(candidatePassword, this.password);
 };
 
-// Method to get public profile (without sensitive data)
+// Method to get public profile (matches your controller calls)
 userSchema.methods.toPublicProfile = function () {
   return {
     id: this._id,
+    name: this.name,
     username: this.username,
     profilePhoto: this.profilePhoto,
-    bio: this.bio,
     points: this.points,
     level: this.level,
-    badges: this.badges,
     certificateLevel: this.certificateLevel,
-    tasksHelped: this.tasksHelped,
     averageRating: this.averageRating,
-    totalReviews: this.totalReviews,
+    trustMeter: this.trustMeter,
     idVerified: this.idVerified,
-    createdAt: this.createdAt,
   };
 };
 
-// Method to calculate certificate level based on points
-userSchema.methods.calculateCertificateLevel = function () {
-  if (this.points >= 500) return 'platinum';
-  if (this.points >= 250) return 'gold';
-  if (this.points >= 120) return 'silver';
-  if (this.points >= 50) return 'bronze';
-  return 'none';
-};
-
-// Method to update certificate level
-userSchema.methods.updateCertificateLevel = function () {
-  const newLevel = this.calculateCertificateLevel();
-  if (newLevel !== this.certificateLevel) {
-    this.certificateLevel = newLevel;
-    return true; // Level changed
-  }
-  return false; // No change
-};
-
-const User = mongoose.model('User', userSchema);
-
-module.exports = User;
+module.exports = mongoose.model('User', userSchema);
